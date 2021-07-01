@@ -1,3 +1,4 @@
 tkinter
 PIL
 foscontrol
+cv2

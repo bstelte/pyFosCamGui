@@ -16,4 +16,4 @@ Getting started
 ---------------
 
 Create a new `cam.cfg` file using `cam.cfg.example` as template.
-Run 'app.py' from the comand line.
+Run 'gui.py' from the comand line.

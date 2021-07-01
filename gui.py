@@ -8,6 +8,7 @@ from PIL import ImageTk, Image
 from foscontrol import Cam
 import sys
 import time
+import cv2
 
 try:  # PY3
     from configparser import ConfigParser
@@ -32,41 +33,61 @@ class App:
         if self.img is not None:
             print('Writing picture')
             open('test.jpg', 'wb').write(self.img)
-            time.sleep(0.1)
-            self.loopCapture()
+            #time.sleep(0.1)
+            #self.loopCapture()
         else:
             print('No picture')       
 
 
     def loopCapture(self):
-        self.img = Image.open("test.jpg")
-        #resize
-        basewidth=1000
-        wpercent = (basewidth/float(self.img.size[0]))
-        hsize = int((float(self.img.size[1])*float(wpercent)))
-        self.img = self.img.resize((basewidth,hsize), Image.ANTIALIAS)
-        self.tkimg[0] = ImageTk.PhotoImage(self.img)
-        self.label.config(image=self.tkimg[0])
+        # Get the latest frame and convert image format
+        self.OGimage = cv2.cvtColor(self.cap.read()[1], cv2.COLOR_BGR2RGB) # to RGB
+        self.OGimage = Image.fromarray(self.OGimage) # to PIL format
+        self.image = self.OGimage.resize((960, 540), Image.ANTIALIAS)
+        self.image = ImageTk.PhotoImage(self.image) # to ImageTk format
+        # Update image
+        self.canvas.create_image(0, 0, anchor=NW, image=self.image)
 
+        #self.img = Image.open("test.jpg")
+        #resize
+        #basewidth=1000
+        #wpercent = (basewidth/float(self.img.size[0]))
+        #hsize = int((float(self.img.size[1])*float(wpercent)))
+        #self.img = self.img.resize((basewidth,hsize), Image.ANTIALIAS)
+        #self.tkimg[0] = ImageTk.PhotoImage(self.img)
+        #self.label.config(image=self.tkimg[0])
+
+        self.window.after(self.interval, self.loopCapture)
 
     def __init__(self, master):
         frame = Frame(master)
-        frame.pack()
-            
-        self.label = Label(frame)
-        self.label.pack()
+        frame.pack()      
+
+        self.window = master        
+
+        self.interval = 10 # Interval in ms to get the latest frame
+
+        #self.label = Label(frame)
+        #self.label.pack()
+
+        # Create canvas for image
+        self.canvas = Canvas(self.window, width=960, height=540)
+        self.canvas.pack()
+        # Update image on canvas
+        root.after(self.interval, self.loopCapture)
+
         self.img = None
         self.tkimg = [None]  
         self.button = Button(frame, 
                              text="QUIT", fg="red",
                              command=frame.quit)
         self.button.pack(side=LEFT)
-        self.slogan = Button(frame,
-                             text="Reload",
-                             command=self.loopCapture)
-        self.slogan.pack(side=LEFT)
+        #self.slogan = Button(frame,
+        #                     text="Reload",
+        #                     command=self.loopCapture)
+        #self.slogan.pack(side=LEFT)
         self.glogan = Button(frame,
-                             text="getPic",
+                             text="savePic",
                              command=self.getpic)
         self.glogan.pack(side=LEFT)
         self.rotleft = Button(frame,
@@ -117,51 +138,63 @@ class App:
 
         # connection to the camera
         self.do = Cam(prot, host, port, user, passwd, context=ctx)
+        print("DevInfo:")
+        print(self.do.getDevInfo())
+        print("Image Setting:")
+        print(self.do.getImageSetting())
+        print("Video Parameter:")
+        print(self.do.getVideoStreamParam())
+        print("Network Parameter:")
+        print(self.do.getIPInfo())
+
+        self.video = self.do.getRTSPStream()
+        print("RTSP URL is ",self.video)
+        self.cap = cv2.VideoCapture(self.video)
 
         self.getpic()
         #self.loopCapture()
 
     def rotleft(self):
         self.do.ptzMoveLeft()
-        time.sleep(0.5)
+        time.sleep(0.3)
         self.do.ptzStopRun()
-        time.sleep(0.1)
-        self.getpic()
+        #time.sleep(0.1)
+        #self.getpic()
 
     def rotright(self):
         self.do.ptzMoveRight()
-        time.sleep(0.5)
+        time.sleep(0.3)
         self.do.ptzStopRun()
-        time.sleep(0.1)
-        self.getpic()
+        #time.sleep(0.1)
+        #self.getpic()
 
     def rotup(self):
         self.do.ptzMoveUp()
-        time.sleep(0.5)
+        time.sleep(0.3)
         self.do.ptzStopRun()
-        time.sleep(0.1)
-        self.getpic()
+        #time.sleep(0.1)
+        #self.getpic()
 
     def rotdown(self):
         self.do.ptzMoveDown()
-        time.sleep(0.5)
+        time.sleep(0.3)
         self.do.ptzStopRun()
-        time.sleep(0.1)
-        self.getpic()
+        #time.sleep(0.1)
+        #self.getpic()
 
     def zoomin(self):
         self.do.zoomIn()
-        time.sleep(0.5)
+        time.sleep(0.3)
         self.do.zoomStop()
-        time.sleep(0.1)
-        self.getpic()
+        #time.sleep(0.1)
+        #self.getpic()
 
     def zoomout(self):
         self.do.zoomOut()
-        time.sleep(0.5)
+        time.sleep(0.3)
         self.do.zoomStop()
-        time.sleep(0.1)
-        self.getpic()
+        #time.sleep(0.1)
+        #self.getpic()
 
     def write_slogan(self):
         print("Ready")
